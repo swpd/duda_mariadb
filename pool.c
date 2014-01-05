@@ -203,19 +203,22 @@ mariadb_conn_t *mariadb_pool_get_conn(duda_global_t *pool_key, duda_request_t *d
             return NULL;
         }
 
+        config = __mariadb_pool_get_config(pool_key);
+        if (!config) {
+            FREE(pool);
+            return NULL;
+        }
+
         pool->size      = 0;
         pool->free_size = 0;
+        pool->config = config;
         mk_list_init(&pool->free_conns);
         mk_list_init(&pool->busy_conns);
         global->set(*pool_key, (void *) pool);
-
-        config = __mariadb_pool_get_config(pool_key);
-        if (!config) {
-            return NULL;
-        }
-        pool->config = config;
     }
 
+    /* configuration of a pool */
+    config = pool->config;
 
     if (mk_list_is_empty(&pool->free_conns) == 0) {
         if (pool->size < config->max_size) {
